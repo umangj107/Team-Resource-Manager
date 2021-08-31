@@ -1,0 +1,71 @@
+{% include 'header.html' %}
+
+<div class="jumbotron jumbotron-fluid">
+    <div class="container">
+        <h1 class="display-4">Select Project Members</h1>
+        <p class="lead">Following is the list of employees available and their allocations.
+            Please select all members you want to add to the team.</p>
+        <a href="{{url_for('home')}}" class="btn btn-primary">Home.</a>
+    </div>
+</div>
+
+
+
+<form method="POST" action="{{url_for('select_members')}}">
+    <div class="form-inline col-lg-8 col-md-10 mx-auto content" style="margin:50px 0px;">
+        <div>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="form-group mx-sm-3 mb-2 ">
+
+            <label for="pid"> Please Enter Project Id. </label>
+            <select class="form-control" name="project_id" id="pid" style="margin:0px 10px;">
+                {% for project in projects %}
+                  <option value="{{project[0]}}">{{project[1]}}</option>
+                {%endfor%}
+            </select>
+<!--            <input class="form-control" id="pid" name=project_id placeholder="Enter Project Id"-->
+<!--                   type="number" style="margin:0px 10px;">-->
+        </div>
+    </div>
+
+    <div class="container">
+        <h5 style="margin:20px 30px;text-align:center"> Select Employees from the following list and select their allocation percentage.</h5>
+
+        {% for employee in employees %}
+
+        <div class="form-group mb-2">
+            <div class="form-check col-lg-8 col-md-10 mx-auto content">
+                <input class="form-check-input" id="flexCheckDefault" name="select_team_members" type="checkbox"
+                       value="{{employee.employee_id}}">
+                <label class="form-check-label" for="flexCheckDefault">
+                    {{employee.employee_id}} &ndash;&gt; {{employee.name}} &ndash;&gt; {{employee.employee_type}} -->
+                    {{100
+                    - employee.Total_Allocations}}% available.
+                </label>
+            </div>
+            <div class="form-inline col-lg-8 col-md-10 mx-auto content">
+                <div class="form-group mx-sm-3 mb-2 ">
+                    <input class="form-control" name={{employee.employee_id}} placeholder="Enter Allocation percentage"
+                           type="number">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="container my-3 bg-light">
+        <div class="col-md-12 text-center">
+            <button type="submit" class="btn btn-primary" style="margin:30px 0px;">Submit</button>
+        </div>
+    </div>
+</form>
+
+{% include 'footer.html' %}

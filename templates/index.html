@@ -1,0 +1,70 @@
+{% include 'header.html' %}
+
+<div class="jumbotron jumbotron-fluid">
+    <div class="container">
+        <h1 class="display-4">Allocation Manager</h1>
+        <p class="lead">Manage all team projects and member allocations.</p>
+        <a href="{{url_for('home')}}" class="btn btn-primary">Home.</a>
+    </div>
+</div>
+
+
+<div class="container">
+    <div class="row" style="margin:20px 70px;">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">New Employee!</h5>
+                    <p class="card-text">Add a new Employee Record.</p>
+                    <a href="{{url_for('new_employee')}}" class="btn btn-primary">Add</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">New Project!</h5>
+                    <p class="card-text">Create a new Project.</p>
+                    <a href="{{url_for('new_project')}}" class="btn btn-primary">Create</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row" style="margin:20px 70px;">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">New Allocation!</h5>
+                    <p class="card-text">Add a new member to a project team.</p>
+                    <a href="{{url_for('new_allocation')}}" class="btn btn-primary">Add</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Search!</h5>
+                    <p class="card-text">Search for anyone's total allocation on a given date.</p>
+                    <a href="{{url_for('find_allocation')}}" class="btn btn-primary">Search</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row" style="margin:20px 70px;">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Find Details!</h5>
+                    <p class="card-text">Find Allocation Details of any employee between specified dates.</p>
+                    <a href="{{url_for('find_details')}}" class="btn btn-primary">Find</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'footer.html' %}

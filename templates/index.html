@@ -5,10 +5,13 @@
         <h1 class="display-4">Allocation Manager</h1>
         <p class="lead">Manage all team projects and member allocations.</p>
         <a href="{{url_for('home')}}" class="btn btn-primary">Home.</a>
+        {% if logged_in %}
+            <a href="{{url_for('logout')}}" class="btn btn-primary">Logout.</a>
+        {% endif %}
     </div>
 </div>
 
-
+{% if logged_in %}
 <div class="container">
     <div class="row" style="margin:20px 70px;">
         <div class="col-sm-6">
@@ -66,5 +69,34 @@
         </div>
     </div>
 </div>
+
+{% endif %}
+
+{% if not logged_in %}
+
+<div class="container">
+    <div class="row" style="margin:20px 70px;">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Register!</h5>
+                    <p class="card-text">Register yourself to access the website.</p>
+                    <a href="{{url_for('register')}}" class="btn btn-primary">Register</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Login!</h5>
+                    <p class="card-text">Get yourself authenticated.</p>
+                    <a href="{{url_for('login')}}" class="btn btn-primary">Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
 
 {% include 'footer.html' %}

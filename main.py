@@ -15,19 +15,32 @@ import smtplib
 from dotenv import load_dotenv
 import os
 from datetime import datetime, timedelta
-from forms import New_Employee_Form, New_Project_Form, New_Allocation_Form, Find_Allocation, Find_Details
+from forms import New_Employee_Form, New_Project_Form, New_Allocation_Form, Find_Allocation, Find_Details, AdminLoginForm,AdminRegistrationForm
 
-
+#app configuration
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'MyNameIsUmangJain'
 bootstrap = Bootstrap(app)
+
+Base = declarative_base()
 
 ##Connect to Database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///allocations.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-##Table-1 --> Employee Details Table Configuration
+
+
+##Table-1 --> Admin Details
+class Admin(UserMixin, db.Model):
+    __tablename__ = "admin"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(250), nullable=False)
+    email = db.Column(db.String(250), unique=True, nullable=False)
+    password = db.Column(db.String(250), nullable=False)
+
+
+##Table-2 --> Employee Details Table Configuration
 class Employee(db.Model):
     __tablename__ = "employees"
     id= db.Column(db.Integer, primary_key=True)
@@ -39,7 +52,7 @@ class Employee(db.Model):
     allocations = relationship("Allocation", back_populates="employee")
 
 
-##Table-2 --> Project Details Table Configuration
+##Table-3 --> Project Details Table Configuration
 class Project(db.Model):
     __tablename__ = "projects"
     pid= db.Column(db.String(100), primary_key=True)
@@ -48,6 +61,8 @@ class Project(db.Model):
     end_date= db.Column(db.DateTime(50), nullable=False)
     allocations = relationship("Allocation", back_populates="project")
 
+
+##Table-4 --> Allocation Details Table Configuration
 class Allocation(db.Model):
     __tablename__ = "allocations"
     id = db.Column(db.Integer, primary_key=True)
@@ -57,30 +72,103 @@ class Allocation(db.Model):
     employee = relationship("Employee", back_populates="allocations")
     allocation_percent = db.Column(db.Float, nullable=False)
 
+
+class AdminEmails(db.Model):
+    __tablename__ = "admin_emails"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(250), nullable=False)
+    email = db.Column(db.String(250), unique=True, nullable=False)
+
+
 db.create_all()
 
 
+#Login Manager Configuration
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Admin.query.get(int(user_id))
 
 
+
+############### Page Routes From Here ####################
+
+#Route for homepage
 @app.route('/')
 def home():
-    # projects = Project.query.filter(Project.start_date <= datetime.now()).filter(Project.end_date <= datetime(2021, 9, 30)).all()
-    # for project in projects:
-    #     print(f"{project.pname}, {project.start_date}, {project.end_date}")
-
-    # allocation = db.session.query(Allocation.employee_id,
-    #                               func.sum(Allocation.allocation_percent).label('Total_Allocations')) \
-    #     .join(Project) \
-    #     .group_by(Allocation.employee_id) \
-    #     .filter(Allocation.employee_id == 1234) \
-    #     .filter(Project.start_date <= datetime(2021, 9, 30)) \
-    #     .filter(datetime(2021, 10, 1) <= Project.end_date).all()
-    #
-    # print(f"{allocation[0].employee_id}, {allocation[0].Total_Allocations}")
-    return render_template('index.html')
+    return render_template('index.html', logged_in = current_user.is_authenticated)
 
 
+#Route for Registration page
+@app.route('/register', methods = ["GET", "POST"])
+def register():
+    form = AdminRegistrationForm()
+    if form.validate_on_submit():
+        name = form.name.data
+        email = form.email.data
+        password = generate_password_hash(form.password.data, method = 'pbkdf2:sha256', salt_length=8)
+
+        if Admin.query.filter_by(email=email).first():
+            #User already exists
+            flash("You have already signed up with that email, login instead!")
+            return redirect(url_for('login'))
+
+        elif not db.session.query(AdminEmails.email).filter(AdminEmails.email==email).first():
+            return abort(403)
+
+        new_admin = Admin(
+            name = name,
+            email = email,
+            password = password
+        )
+        db.session.add(new_admin)
+        db.session.commit()
+
+        login_user(new_admin)
+        return redirect(url_for('home'))
+
+    return render_template("register.html", form = AdminRegistrationForm())
+
+
+#Route for login page
+@app.route('/login', methods = ["GET", "POST"])
+def login():
+    form = AdminLoginForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+
+        target_user = Admin.query.filter_by(email = email).first()
+
+        if not target_user:
+            flash('Email id not registered. Please try again')
+            return redirect(url_for('login'))
+
+        if not check_password_hash(target_user.password, password):
+            flash('Incorrect Password. Please try again')
+            return redirect(url_for('login'))
+
+        else:
+            login_user(target_user)
+            return redirect(url_for('home'))
+
+    return render_template("login.html", form = form)
+
+
+#Route for logout
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+
+#Route for new-employee page.
+#This page gives a form to enter details of a new employee
 @app.route('/new-employee', methods=["GET","POST"])
+@login_required
 def new_employee():
     form = New_Employee_Form()
     if form.validate_on_submit():
@@ -140,7 +228,10 @@ def new_employee():
     return render_template('new_employee.html', form= form)
 
 
+#Route for new project page
+#This page gives a form for creating a new project record
 @app.route('/new-project', methods=["GET", "POST"])
+@login_required
 def new_project():
     form = New_Project_Form()
     if form.validate_on_submit():
@@ -168,7 +259,10 @@ def new_project():
     return render_template('new_project.html', form=form)
 
 
+#Route for new allocation page
+#This page lays out a form for creating a new allocation record
 @app.route('/new-allocation', methods=["GET", "POST"])
+@login_required
 def new_allocation():
     form = New_Allocation_Form()
     projects = db.session.query(Project.pid,
@@ -232,7 +326,10 @@ def new_allocation():
     return render_template('new_allocation.html', form=form)
 
 
+#Route for select page
+#This page lists out all the available members and helps select members for a project
 @app.route('/select', methods=["GET","POST"])
+@login_required
 def select_members():
 
     projects = db.session.query(Project.pid,
@@ -293,7 +390,10 @@ def select_members():
     return render_template('select.html', employees = available_members, projects = project_list)
 
 
+#Route for find allocation page
+#This page helps to find allocation of a particular employee at a particular date
 @app.route('/find-allocation', methods=["GET", "POST"])
+@login_required
 def find_allocation():
     form = Find_Allocation()
 
@@ -317,11 +417,6 @@ def find_allocation():
             .filter(Project.start_date <= date) \
             .filter(date <= Project.end_date).all()
 
-        # y, m, d = str(date).split('-')
-        # start_date = datetime.datetime(int(sy), int(sm), int(sd))
-        #
-        # print(len(allocation))
-        # print(allocation)
         if len(allocation) > 0:
             flash(f"Current Allocations for {allocation[0].employee_id} --> {allocation[0].name} is {allocation[0].Total_Allocations}%")
             return redirect(url_for('find_allocation'))
@@ -332,7 +427,10 @@ def find_allocation():
     return render_template('find_allocation.html', form = form)
 
 
+#Route for find details page
+#This route helps see all the allocations of an employee between a given start date and end date
 @app.route('/find-details', methods = ["GET", "POST"])
+@login_required
 def find_details():
     form = Find_Details()
 
@@ -362,17 +460,6 @@ def find_details():
                     .group_by(Allocation.project_id)\
                     .filter(Allocation.employee_id == emp_id)\
                     .all()
-
-        # print(len(records))
-        # for x in records:
-        #     print(f"{x.name},"
-        #           f"{x.email}."
-        #           f"{x.skype},"
-        #           f"{x.pname},"
-        #           f"{x.pname},"
-        #           f"{x.start_date},"
-        #           f"{x.end_date},"
-        #           f"{x.Total_Allocations}")
 
         if len(records) == 0:
             flash(f"No Allocations to Show!")

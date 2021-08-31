@@ -1,0 +1,33 @@
+{% import "bootstrap/wtf.html" as wtf %}
+{% include "header.html" %}
+
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <h1 class="display-4">Login</h1>
+    <p class="lead">Login to access the features of this site.</p>
+      <a href="{{url_for('home')}}" class="btn btn-primary">Home.</a>
+  </div>
+</div>
+
+<div class = "container">
+    <div class = "col-lg-8 col-md-10 mx-auto content">
+        <form method="POST" action="{{url_for('login')}}">
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div style="margin:30px 0px;">
+                {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+            </div>
+        </form>
+</div>
+
+</div>
+
+
+{% include 'footer.html' %}

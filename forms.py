@@ -49,3 +49,16 @@ class Find_Details(FlaskForm):
     from_date = DateField("From Date", format='%Y-%m-%d', validators=[DataRequired()])
     to_date = DateField("To Date", format='%Y-%m-%d', validators=[DataRequired()])
     submit = SubmitField("Find Details.")
+
+
+class AdminRegistrationForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired(), Email(),])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Register")
+
+
+class AdminLoginForm(FlaskForm):
+    email = StringField("Email", validators=[DataRequired(), Email(),])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Login")

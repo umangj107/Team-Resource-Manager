@@ -1,19 +1,11 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, abort
 from flask_bootstrap import Bootstrap
-from flask_ckeditor import CKEditor
-from datetime import date
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
-from flask_gravatar import Gravatar
-from functools import wraps
 from sqlalchemy import Table, Column, Integer, ForeignKey, func
 from sqlalchemy.ext.declarative import declarative_base
-from flask_gravatar import Gravatar
-import smtplib
-from dotenv import load_dotenv
-import os
 from datetime import datetime, timedelta
 from forms import New_Employee_Form, New_Project_Form, New_Allocation_Form, Find_Allocation, Find_Details, AdminLoginForm,AdminRegistrationForm
 
@@ -107,7 +99,7 @@ def register():
     form = AdminRegistrationForm()
     if form.validate_on_submit():
         name = form.name.data
-        email = form.email.data
+        email = form.email.data.lower()
         password = generate_password_hash(form.password.data, method = 'pbkdf2:sha256', salt_length=8)
 
         if Admin.query.filter_by(email=email).first():
@@ -137,7 +129,7 @@ def register():
 def login():
     form = AdminLoginForm()
     if form.validate_on_submit():
-        email = form.email.data
+        email = form.email.data.lower()
         password = form.password.data
 
         target_user = Admin.query.filter_by(email = email).first()
@@ -236,13 +228,35 @@ def new_project():
     form = New_Project_Form()
     if form.validate_on_submit():
         project_id = form.project_id.data
-        project_name = form.project_name.data
+        project_name = form.project_name.data.upper()
         # # sy, sm, sd = form.start_date.data.split('-')
         # start_date =  datetime.datetime(int(sy), int(sm), int(sd))
         # ey, em, ed = form.end_date.data.split('-')
         # end_date = datetime.datetime(int(ey), int(em), int(ed))
         start_date = form.start_date.data
         end_date = form.end_date.data
+
+        #Checking for a record with same project id
+        project = db.session.query(Project.pid,
+                                   Project.pname).filter(Project.pid == project_id).all()
+        if len(project) > 0:
+            flash(f"Project {project[0].pid} --> {project[0].pname} with same project id already exists!")
+            return redirect(url_for('new_project'))
+
+
+        # Checking for a record with same project name
+        project = db.session.query(Project.pid,
+                                   Project.pname).filter(Project.pname == project_name).all()
+        if len(project) > 0:
+            flash(f"Project {project[0].pid} --> {project[0].pname} with same project name already exists!")
+            return redirect(url_for('new_project'))
+
+
+        # Checking if start date > end date
+        if start_date > end_date:
+            flash(f"Start Date {start_date} cannot be greater than End Date {end_date}!")
+            return redirect(url_for('new_project'))
+
 
         new_project= Project(
             pid=project_id,
@@ -314,9 +328,6 @@ def new_allocation():
             )
             db.session.add(new_allocation)
             db.session.commit()
-
-            print(f"{project_id}, {employee_id}, {alloc_percent}")
-
 
             return redirect(url_for('home'))
 
@@ -456,7 +467,7 @@ def find_details():
                                    Project.end_date,
                                    func.sum(Allocation.allocation_percent).label('Total_Allocations'))\
                     .join(Project).join(Employee) \
-                    .filter((Project.start_date >= from_date) | (Project.end_date <= to_date))\
+                    .filter(Project.start_date.between(from_date, to_date) | Project.end_date.between(from_date, to_date))\
                     .group_by(Allocation.project_id)\
                     .filter(Allocation.employee_id == emp_id)\
                     .all()

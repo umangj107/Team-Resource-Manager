@@ -417,14 +417,14 @@ def find_allocation():
 
     if form.validate_on_submit():
         employee_id = form.employee_id.data
-        date = form.date.data
+        date = form.date.data + timedelta(days=1)
 
         allocation = db.session.query(Allocation.employee_id,
                                       Employee.name,
                                       func.sum(Allocation.allocation_percent).label('Total_Allocations')) \
             .join(Project).join(Employee) \
             .group_by(Allocation.employee_id) \
-            .filter(Allocation.employee_id == employee_id) \
+            .filter(Allocation.employee_id == employee_id)\
             .filter(Project.start_date <= date) \
             .filter(date <= Project.end_date).all()
 

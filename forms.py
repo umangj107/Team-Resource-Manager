@@ -27,9 +27,9 @@ class New_Project_Form(FlaskForm):
 
 class New_Allocation_Form(FlaskForm):
     # project_id = StringField("Project Id", validators=[DataRequired()])
-    project_id = SelectField("Project Id",  validators=[DataRequired()])
+    project_id = SelectField("Select Project",  validators=[DataRequired()])
     # employee_id = StringField("Employee Id")
-    employee_id = SelectField("Employee Id")
+    employee_id = SelectField("Select Employee")
     alloc_percent = StringField("Allocation percentage")
     submit = SubmitField("Add")
     select = SubmitField("Choose from List")
@@ -38,14 +38,14 @@ class New_Allocation_Form(FlaskForm):
 
 class Find_Allocation(FlaskForm):
     # employee_id = StringField("Employee Id", validators=[DataRequired()])
-    employee_id = SelectField("Employee Id", validators=[DataRequired()])
+    employee_id = SelectField("Select Employee", validators=[DataRequired()])
     date = DateField("On Date", format='%Y-%m-%d', validators=[DataRequired()])
     submit = SubmitField("Find allocation.")
 
 
 class Find_Details(FlaskForm):
     # employee_id = StringField("Employee Id", validators=[DataRequired()])
-    employee_id = SelectField("Employee Id", validators=[DataRequired()])
+    employee_id = SelectField("Select Employee", validators=[DataRequired()])
     from_date = DateField("From Date", format='%Y-%m-%d', validators=[DataRequired()])
     to_date = DateField("To Date", format='%Y-%m-%d', validators=[DataRequired()])
     submit = SubmitField("Find Details.")
